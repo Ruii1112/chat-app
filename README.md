@@ -104,6 +104,7 @@ npm create vite@latest frontend
 cd frontend
 npm install
 npm install socket.io-client
+npm install vue-router
 ```
 
 `frontend/src/App.vue`を編集
