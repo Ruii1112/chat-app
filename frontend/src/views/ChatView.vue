@@ -30,50 +30,70 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch, nextTick } from 'vue'
-import { io } from 'socket.io-client'
-import { useRoute, useRouter } from 'vue-router'
+import { ref, onMounted, watch, nextTick } from 'vue';
+import { io } from 'socket.io-client';
+import { useRoute, useRouter } from 'vue-router';
 
-const route = useRoute()
-const router = useRouter()
-const name = route.query.name || '匿名'
+// ルーティング情報
+const route = useRoute();
+const router = useRouter();
+const name = route.query.name || '匿名';
 
-const socket = io('http://localhost:3000')
-const messages = ref([])
-const input = ref('')
-const users = ref([])
-const chatWindow = ref(null)
+// Socket.IO接続
+const socket = io('http://localhost:3000');
 
-onMounted(() => {
-    socket.emit('join', name);
+// 状態定義
+const messages = ref([]);
+const input = ref('');
+const users = ref([]);
+const chatWindow = ref(null);
 
-    socket.on('chat message', (msg) => {
-        messages.value.push(msg)
-    });
+// チャットに入室する処理
+const joinChat = () => {
+  socket.emit('join', name);
 
-    socket.on('user list', (list) => {
-        users.value = list;
-    });
-})
+  socket.on('chat message', receiveMessage);
+  socket.on('user list', updateUserList);
+};
 
-watch(() => messages.value.length, async () => {
-    await nextTick();
-    if (chatWindow.value) {
-        chatWindow.value.scrollTop = chatWindow.value.scrollHeight;
-    }
-})
+// メッセージ受信時の処理
+const receiveMessage = (msg) => {
+  messages.value.push(msg);
+};
 
+// ユーザーリスト更新
+const updateUserList = (list) => {
+  users.value = list;
+};
+
+// スクロールを最下部へ移動
+const scrollToBottom = async () => {
+  await nextTick();
+  if (chatWindow.value) {
+    chatWindow.value.scrollTop = chatWindow.value.scrollHeight;
+  }
+};
+
+// メッセージ送信処理
 const sendMessage = () => {
-    if (input.value.trim()) {
-        socket.emit('chat message', { sender: name, text: input.value })
-        input.value = ''
-    }
-}
+  const text = input.value.trim();
+  if (!text) return;
 
+  socket.emit('chat message', { sender: name, text });
+  input.value = '';
+};
+
+// チャットから退出する処理
 const exitChat = () => {
-    socket.disconnect();
-    router.push('/')
-}
+  socket.disconnect();
+  router.push('/');
+};
+
+// 初期処理
+onMounted(joinChat);
+
+// メッセージ数が変わったらスクロール
+watch(() => messages.value.length, scrollToBottom);
 </script>
 
 <style scoped>

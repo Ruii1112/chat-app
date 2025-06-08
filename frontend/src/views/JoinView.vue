@@ -10,14 +10,17 @@
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 
+// 状態：名前入力
 const name = ref('');
 const router = useRouter();
 
+// 入室処理
 const enterChat = () => {
-  if (name.value.trim()) {
-    router.push({ path: 'chat', query: { name: name.value } });
-  }
-}
+  const trimmedName = name.value.trim();
+  if (!trimmedName) return;
+
+  router.push({ path: 'chat', query: { name: trimmedName } });
+};
 </script>
 
 <style>
